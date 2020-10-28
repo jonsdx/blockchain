@@ -24,7 +24,7 @@ contract DutchAuction {
     uint256 public ceiling;
     uint256 public startPrice;
     uint256 public clearPrice;
-    uint256 public startBlock;
+    uint256 public startTime;
     uint256 public endTime;
     uint256 public totalReceived;
     uint256 public finalPrice;
@@ -75,6 +75,8 @@ contract DutchAuction {
     modifier timedTransitions() {
         if (stage == Stages.AuctionStarted && calcTokenPrice() < clearPrice)
             finalizeAuction();
+        if (stage == Stages.AuctionStarted && now > startTime + AUCTION_DURATION)
+            finalizeAuction();
         if (stage == Stages.AuctionEnded && now > endTime + WAITING_PERIOD)
             stage = Stages.TradingStarted;
         _;
@@ -90,7 +92,7 @@ contract DutchAuction {
     function CreateAuction(address payable _wallet, uint256 _ceiling, uint256 _startPrice, uint256 _clearPrice)
         public
     {
-        if (_wallet == address(0) || _ceiling == 0 || _startPrice == 0)
+        if (_wallet == address(0) || _ceiling == 0 || _startPrice == 0 || _clearPrice == 0)
             // Arguments are null.
             revert();
         owner = msg.sender;
@@ -135,26 +137,27 @@ contract DutchAuction {
             return(4);
     }
 
-    /// @dev Starts auction and sets startBlock.
+    /// @dev Starts auction and sets startTime.
     function startAuction()
         public
         isWallet
         atStage(Stages.AuctionSetUp)
     {
         stage = Stages.AuctionStarted;
-        startBlock = block.number;
+        startTime = now;
     }
 
     /// @dev Changes auction ceiling and start price factor before auction is started.
     /// @param _ceiling Updated auction ceiling.
     /// @param _startPrice Updated start price factor.
-    function changeSettings(uint256 _ceiling, uint256 _startPrice)
+    function changeSettings(uint256 _ceiling, uint256 _startPrice, uint _clearPrice)
         public
         isWallet
         atStage(Stages.AuctionSetUp)
     {
         ceiling = _ceiling;
         startPrice = _startPrice;
+        clearPrice = _clearPrice;
     }
 
     /// @dev Calculates current token price.
@@ -179,28 +182,13 @@ contract DutchAuction {
         return stage;
     }
 
-    function acceptMoney(address payable receiver)
-        public
-        payable
-        isValidPayload
-        atStage(Stages.AuctionStarted)
-        returns (uint256 amount)
-    {
-        receiver = msg.sender;
-        amount = msg.value;
-        wallet.transfer(amount);
-        bids[receiver] += amount;
-        totalReceived += amount;
-        BidSubmission(receiver, amount);
-    }
-
     /// @dev Allows to send a bid to the auction.
     /// @param receiver Bid will be assigned to this address if set.
     function bid(address payable receiver)
         public
         payable
         isValidPayload
-        //timedTransitions
+        timedTransitions
         atStage(Stages.AuctionStarted)
         returns (uint256 amount)
     {
@@ -210,15 +198,25 @@ contract DutchAuction {
         amount = msg.value;
 
         // ceiling = max tokens sold * clearing price
-        uint256 maxWei = (MAX_TOKENS_SOLD) * calcTokenPrice() - totalReceived;
-        uint256 maxWeiBasedOnTotalReceived = ceiling - totalReceived;
-        if (maxWeiBasedOnTotalReceived < maxWei)
-            maxWei = maxWeiBasedOnTotalReceived;
-        // Only invest maximum possible amount.
+        uint256 maxWei = ceiling - totalReceived;
+        uint256 returnAmt = 0;
+        uint256 currentPrice = calcTokenPrice();
+        // Unable to buy at least one token
+        if (amount < currentPrice)
+            revert();
+        // Only invest maximum possible amount 
         if (amount > maxWei) {
-            amount = maxWei;
-            // Send change back to receiver address. In case of a ShapeShift bid the user receives the change back directly.
-            if (!receiver.send(msg.value - amount))
+            // Can buy enough tokens to bring total amount past ceiling
+            if (amount >= maxWei + (clearPrice-(maxWei%currentPrice))){
+                amount = maxWei + (clearPrice-(maxWei%currentPrice)); 
+            } 
+            // Cannot buy enough tokens to bring total past ceiling
+            else {
+                amount = maxWei - (maxWei%currentPrice);
+            }
+            returnAmt = msg.value - amount;
+            // Send change back to receiver address.
+            if (!receiver.send(returnAmt))
             // Sending failed
                 revert();
         }
@@ -228,7 +226,7 @@ contract DutchAuction {
             revert();
         bids[receiver] += amount;
         totalReceived += amount;
-        if (maxWei == amount)
+        if (totalReceived >= ceiling)
             // When maxWei is equal to the big amount the auction is ended and finalizeAuction is triggered.
             finalizeAuction();
         BidSubmission(receiver, amount);
@@ -244,6 +242,7 @@ contract DutchAuction {
     {
         if (receiver == address(0))
             receiver = msg.sender;
+        // tokenCount will be rounded down for all successful bids
         uint256 tokenCount = bids[receiver]  / finalPrice;
         bids[receiver] = 0;
         LearnToken.transferFrom(wallet, receiver, tokenCount);
@@ -257,8 +256,19 @@ contract DutchAuction {
         returns (uint256)
     {
         //need to scale from start price to clear price
-        //return startPrice / (block.number - startBlock + 7500) + 1;
-        return startPrice;
+        uint256 interval = AUCTION_DURATION / 5;
+        uint256 decrement = (startPrice - clearPrice) / 4;
+        if (now < startTime + interval)
+            return startPrice;
+        else if (now < startTime + (2*interval))
+            return startPrice - decrement;
+        else if (now < startTime + (3*interval))
+            return startPrice - (2*decrement);
+        else if (now < startTime + (4*interval))
+            return startPrice - (3*decrement);
+        else{
+            return clearPrice;
+        }
     }
 
     /*

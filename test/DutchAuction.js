@@ -28,10 +28,10 @@ contract("DutchAuction", accounts => {
         num = await Auction.checkStage();
         assert.equal(num, 1);
         let balance = await LearnToken.balanceOf(accounts[0]);
-        assert.equal(balance, 100000);
-        await LearnToken.approve(Auction.address, 100000);
+        assert.equal(balance, 10000000);
+        await LearnToken.approve(Auction.address, 10000000);
         let allowance = await LearnToken.allowance(accounts[0], Auction.address);
-        assert.equal(allowance, 100000);
+        assert.equal(allowance, 10000000);
     });
 
     it("can start auction correctly", async () => {
@@ -57,7 +57,7 @@ contract("DutchAuction", accounts => {
         await Auction.bid(accounts[2], 
             {from: accounts[2],value: web3.utils.toWei("1000", "wei")});
         await Auction.bid(accounts[3], 
-            {from: accounts[3],value: web3.utils.toWei("100000", "wei")});
+            {from: accounts[3],value: web3.utils.toWei("500000", "wei")});
 
         await Auction.skipTime();
         let num = await Auction.checkStage();
@@ -79,10 +79,9 @@ contract("DutchAuction", accounts => {
         let buyer3 = await LearnToken.balanceOf(accounts[3]);   
         let balance = await LearnToken.totalSupply();
 
-        console.log(balance.toString());
         assert.equal(buyer0, 10); 
         assert.equal(buyer1, 50); 
         assert.equal(buyer2, 100);
-        assert.equal(buyer3, 10000);
+        assert.equal(buyer3, 49840);
     });
   });
