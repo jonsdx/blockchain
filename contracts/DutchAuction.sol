@@ -11,8 +11,7 @@ contract DutchAuction {
     /*
      *  Constants
      */
-    uint256 public MAX_TOKENS_SOLD = 100000; 
-    uint256 public WAITING_PERIOD = 1 minutes;
+    uint256 public MAX_TOKENS_SOLD = 10000000; 
     uint256 public AUCTION_DURATION = 20 minutes;
 
     /*
@@ -21,7 +20,6 @@ contract DutchAuction {
     NTULearnToken public LearnToken;
     address payable public wallet;
     address public owner;
-    uint256 public ceiling;
     uint256 public startPrice;
     uint256 public clearPrice;
     uint256 public startTime;
@@ -38,8 +36,7 @@ contract DutchAuction {
         AuctionDeployed,
         AuctionSetUp,
         AuctionStarted,
-        AuctionEnded,
-        TradingStarted
+        AuctionEnded
     }
 
     /*
@@ -73,12 +70,8 @@ contract DutchAuction {
     }
 
     modifier timedTransitions() {
-        if (stage == Stages.AuctionStarted && calcTokenPrice() < clearPrice)
-            finalizeAuction();
         if (stage == Stages.AuctionStarted && now > startTime + AUCTION_DURATION)
             finalizeAuction();
-        if (stage == Stages.AuctionEnded && now > endTime + WAITING_PERIOD)
-            stage = Stages.TradingStarted;
         _;
     }
 
@@ -87,17 +80,15 @@ contract DutchAuction {
      */
     /// @dev Contract constructor function sets owner.
     /// @param _wallet Learn wallet.
-    /// @param _ceiling Auction ceiling.
     /// @param _startPrice Auction start price.
-    function CreateAuction(address payable _wallet, uint256 _ceiling, uint256 _startPrice, uint256 _clearPrice)
+    function CreateAuction(address payable _wallet, uint256 _startPrice, uint256 _clearPrice)
         public
     {
-        if (_wallet == address(0) || _ceiling == 0 || _startPrice == 0 || _clearPrice == 0)
+        if (_wallet == address(0) || _startPrice == 0 || _clearPrice == 0)
             // Arguments are null.
             revert();
         owner = msg.sender;
         wallet = _wallet;
-        ceiling = _ceiling;
         startPrice = _startPrice;
         clearPrice = _clearPrice;
         stage = Stages.AuctionDeployed;
@@ -133,8 +124,6 @@ contract DutchAuction {
             return(2);
         if (stage==Stages.AuctionEnded)
             return(3);
-        if (stage==Stages.TradingStarted)
-            return(4);
     }
 
     /// @dev Starts auction and sets startTime.
@@ -147,15 +136,13 @@ contract DutchAuction {
         startTime = now;
     }
 
-    /// @dev Changes auction ceiling and start price factor before auction is started.
-    /// @param _ceiling Updated auction ceiling.
+    /// @dev Changes price factor before auction is started.
     /// @param _startPrice Updated start price factor.
-    function changeSettings(uint256 _ceiling, uint256 _startPrice, uint _clearPrice)
+    function changeSettings(uint256 _startPrice, uint _clearPrice)
         public
         isWallet
         atStage(Stages.AuctionSetUp)
     {
-        ceiling = _ceiling;
         startPrice = _startPrice;
         clearPrice = _clearPrice;
     }
@@ -167,7 +154,7 @@ contract DutchAuction {
         timedTransitions
         returns (uint256)
     {
-        if (stage == Stages.AuctionEnded || stage == Stages.TradingStarted)
+        if (stage == Stages.AuctionEnded)
             return finalPrice;
         return calcTokenPrice();
     }
@@ -197,23 +184,16 @@ contract DutchAuction {
             receiver = msg.sender;
         amount = msg.value;
 
-        // ceiling = max tokens sold * clearing price
-        uint256 maxWei = ceiling - totalReceived;
-        uint256 returnAmt = 0;
+        uint256 tokenSupply = tokensLeft();
         uint256 currentPrice = calcTokenPrice();
+        uint256 maxWei = tokenSupply * currentPrice;
+        uint256 returnAmt = 0;
         // Unable to buy at least one token
         if (amount < currentPrice)
             revert();
         // Only invest maximum possible amount 
-        if (amount > maxWei) {
-            // Can buy enough tokens to bring total amount past ceiling
-            if (amount >= maxWei + (clearPrice-(maxWei%currentPrice))){
-                amount = maxWei + (clearPrice-(maxWei%currentPrice)); 
-            } 
-            // Cannot buy enough tokens to bring total past ceiling
-            else {
-                amount = maxWei - (maxWei%currentPrice);
-            }
+        if (amount >= maxWei) {
+                amount = maxWei;
             returnAmt = msg.value - amount;
             // Send change back to receiver address.
             if (!receiver.send(returnAmt))
@@ -226,7 +206,8 @@ contract DutchAuction {
             revert();
         bids[receiver] += amount;
         totalReceived += amount;
-        if (totalReceived >= ceiling)
+        uint256 cap = MAX_TOKENS_SOLD * currentPrice;
+        if (totalReceived >= cap)
             // When maxWei is equal to the big amount the auction is ended and finalizeAuction is triggered.
             finalizeAuction();
         BidSubmission(receiver, amount);
@@ -238,7 +219,7 @@ contract DutchAuction {
         public
         isValidPayload
         timedTransitions
-        atStage(Stages.TradingStarted)
+        atStage(Stages.AuctionEnded)
     {
         if (receiver == address(0))
             receiver = msg.sender;
@@ -271,6 +252,29 @@ contract DutchAuction {
         }
     }
 
+    function endAuction() 
+        public 
+    {
+        finalizeAuction();
+    }
+
+    function skipTime()
+        public
+    {
+        AUCTION_DURATION = 0 minutes;
+    }
+
+    function tokensLeft()
+        public
+        view
+        returns (uint256)
+    {
+        uint256 currPrice = calcTokenPrice(); 
+        uint256 soldTokens = totalReceived / currPrice;
+        uint256 tokensRemaining = MAX_TOKENS_SOLD - soldTokens;
+        return tokensRemaining; 
+    }
+
     /*
      *  Private functions
      */
@@ -283,12 +287,5 @@ contract DutchAuction {
         // Auction contract burns all unsold tokens
         LearnToken.burnFrom(wallet, LearnToken.totalSupply() - soldTokens);
         endTime = now;
-    }
-    function skipTime() 
-        public 
-    {
-        WAITING_PERIOD = 0;
-        finalizeAuction();
-        stage = Stages.TradingStarted;
     }
 }
