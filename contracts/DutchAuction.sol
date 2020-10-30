@@ -254,14 +254,29 @@ contract DutchAuction {
 
     function endAuction() 
         public 
+        isOwner
     {
         finalizeAuction();
     }
 
     function skipTime()
         public
+        isOwner
     {
         AUCTION_DURATION = 0 minutes;
+    }
+
+    function timeLeft()
+        public
+        view
+        returns (uint256)
+    {
+        uint256 remainingTime = startTime + AUCTION_DURATION - now;
+        if (remainingTime < 0){
+            return 0;
+        } else {
+            return remainingTime
+        }
     }
 
     function tokensLeft()
