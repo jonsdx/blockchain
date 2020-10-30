@@ -92,7 +92,32 @@ export const allTokenCount = async () => {
 
 export const setupToken = async () => {
     await contract.methods.setup(TokenAddress);
-    await Token.methods.approve(ContractAddress, 10000000);
+    //await Token.methods.approve(ContractAddress, 10000000);
+    const provider = await detectEthereumProvider();
+    if (provider) {
+        ethereum.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: ethereum.selectedAddress,
+              to: TokenAddress,
+              value: 0,
+              data: web3.eth.abi.encodeFunctionCall(
+                {
+                  name: "approve",
+                  type: "function",
+                  inputs: [ContractAddress, 10000000],
+                },
+                []
+              ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+              chainId: 3,
+            },
+          ],
+        });
+    } else {
+        console.log("Please install MetaMask!");
+    }
+  }
     let stage = await contract.methods.checkStage().call();
     if (stage == 1)
         console.log("Token set up successfully!");
