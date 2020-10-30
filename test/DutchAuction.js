@@ -66,10 +66,10 @@ contract("DutchAuction", accounts => {
         let Auction = await DutchAuction.deployed(); // get the deployed contract
         let LearnToken = await NTULearnToken.deployed();
 
-        Auction.claimTokens(accounts[0]);
-        Auction.claimTokens(accounts[1]);
-        Auction.claimTokens(accounts[2]);
-        Auction.claimTokens(accounts[3]);
+        await Auction.claimTokens(accounts[0]);
+        await Auction.claimTokens(accounts[1]);
+        await Auction.claimTokens(accounts[2]);
+        await Auction.claimTokens(accounts[3]);
 
         let buyer0 = await LearnToken.balanceOf(accounts[0]);
         let buyer1 = await LearnToken.balanceOf(accounts[1]);

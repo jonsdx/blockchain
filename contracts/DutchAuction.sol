@@ -275,7 +275,7 @@ contract DutchAuction {
         if (remainingTime < 0){
             return 0;
         } else {
-            return remainingTime
+            return remainingTime;
         }
     }
 

@@ -3,3 +3,5 @@ build
 node_modules
 
 .secret
+build/contracts/Address.json
+*.json
