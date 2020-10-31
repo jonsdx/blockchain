@@ -1,5 +1,5 @@
-build
+/build
 node_modules
 .secret
-build/contracts/Address.json
+/build/contracts
 *.json
