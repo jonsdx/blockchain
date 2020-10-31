@@ -5,16 +5,13 @@ contract("DutchAuction", accounts => {
     it("created the auction correctly", async () => {
         let Auction = await DutchAuction.deployed(); // get the deployed contract
         let LearnToken = await NTULearnToken.deployed();
-        await Auction.CreateAuction(accounts[0], 500000, 10, 5);
+        await Auction.CreateAuction(accounts[0], 10, 5);
         let owner = await Auction.owner();
         let wallet = await Auction.wallet(); 
-        // ceiling = max number of tokens u want sold * clearing price
-        let ceiling = await Auction.ceiling();
         let startPrice = await Auction.startPrice();
         let clearPrice = await Auction.clearPrice();
         assert.equal(owner, accounts[0]); 
         assert.equal(wallet, accounts[0]);
-        assert.equal(ceiling, 500000); 
         assert.equal(startPrice, 10); 
         assert.equal(clearPrice, 5); 
     });
@@ -56,22 +53,23 @@ contract("DutchAuction", accounts => {
             {from: accounts[1],value: web3.utils.toWei("500", "wei")});
         await Auction.bid(accounts[2], 
             {from: accounts[2],value: web3.utils.toWei("1000", "wei")});
-        await Auction.bid(accounts[3], 
-            {from: accounts[3],value: web3.utils.toWei("500000", "wei")});
+        // await Auction.bid(accounts[3], 
+        //     {from: accounts[3],value: web3.utils.toWei("9999999999", "wei")});
 
+        // await Auction.endAuction();
         await Auction.skipTime();
         let num = await Auction.checkStage();
-        assert.equal(num, 4);
+        assert.equal(num, 2);
         });
 
     it("completes the auction", async () => {
         let Auction = await DutchAuction.deployed(); // get the deployed contract
         let LearnToken = await NTULearnToken.deployed();
 
-        Auction.claimTokens(accounts[0]);
-        Auction.claimTokens(accounts[1]);
-        Auction.claimTokens(accounts[2]);
-        Auction.claimTokens(accounts[3]);
+        await Auction.claimTokens(accounts[0]);
+        await Auction.claimTokens(accounts[1]);
+        await Auction.claimTokens(accounts[2]);
+        await Auction.claimTokens(accounts[3]);
 
         let buyer0 = await LearnToken.balanceOf(accounts[0]);
         let buyer1 = await LearnToken.balanceOf(accounts[1]);
@@ -79,9 +77,9 @@ contract("DutchAuction", accounts => {
         let buyer3 = await LearnToken.balanceOf(accounts[3]);   
         let balance = await LearnToken.totalSupply();
 
-        assert.equal(buyer0, 10); 
-        assert.equal(buyer1, 50); 
-        assert.equal(buyer2, 100);
-        assert.equal(buyer3, 49840);
+        assert.equal(buyer0, 20); 
+        assert.equal(buyer1, 100); 
+        assert.equal(buyer2, 200);
+        assert.equal(buyer3, 0);
     });
   });
