@@ -1,4 +1,3 @@
-import { useState, useRef, useEffect } from "react";
 import detectEthereumProvider from "@metamask/detect-provider";
 // NOTE: be aware of this: https://flaviocopes.com/parcel-regeneratorruntime-not-defined/
 import Web3 from "web3";
