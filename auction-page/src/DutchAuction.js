@@ -9,8 +9,8 @@ import artifact_tok from "../build/contracts/NTULearnToken.json";
 
 const infuraWSS = `wss://ropsten.infura.io/ws/v3/f310feadf7c04024996d4c13a1fd0fbc`; // PLEASE CHANGE IT TO YOURS
 
-export const ContractAddress = "";
-export const TokenAddress = "";
+export const ContractAddress = "0x675E51248c48ecaC375767EAEA830698D3a20350";
+export const TokenAddress = "0x956b5c21082D2a63F7A7312773418eA7B5DE19a1";
 export const Testnet = "ropsten"; 
 
 const web3 = new Web3(
@@ -117,15 +117,15 @@ export const setupToken = async () => {
     } else {
         console.log("Please install MetaMask!");
     }
+  let stage = await contract.methods.checkStage().call();
+  if (stage == 1) {
+      console.log("Token set up successfully!");
   }
-    let stage = await contract.methods.checkStage().call();
-    if (stage == 1)
-        console.log("Token set up successfully!");
-    else if (stage > 1){
-        console.log("Token already setup!");
-    } else {
-        console.log("Token set up failed");
-    }
+  else if (stage > 1){
+      console.log("Token already setup!");
+  } else {
+      console.log("Token set up failed");
+  }
 }
 
 export const beginAuction = async () => {
