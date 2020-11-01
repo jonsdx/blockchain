@@ -1,3 +1,65 @@
-.App {
+.title {
   text-align: center;
+  color: gray;
+}
+
+.content {
+  padding: 100px;
+  display: flex;
+  justify-content: space-between;
+}
+
+.content-top {
+  padding: 10px;
+  display: flex;
+  justify-content: space-around;
+  border-bottom: 2px solid gray;
+}
+
+.card--gray {
+  border-radius: 20px;
+  width: 200px;
+  color: white;
+  background-color: gray;
+  padding: 50px;
+}
+
+.select-quantity {
+  border-radius: 25px;
+  border: 2px solid gray;
+  width: 500px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin: auto;
+  padding: 10px;
+}
+
+.round-button {
+  width: 50px;
+  height: 50px;
+  border: none;
+  outline: none;
+  border-radius: 25px;
+  margin: 10px;
+  cursor: pointer;
+  background-color: gray;
+  color: white;
+  padding: 5px
+}
+
+.rect-button {
+  width: 100px;
+  height: 30px;
+  border: none;
+  outline: none;
+  border-radius: 25px;
+  cursor: pointer;
+  background-color: gray;
+  color: white;
+  padding: 5px;
+}
+
+.disappear {
+  visibility: hidden;
 }
