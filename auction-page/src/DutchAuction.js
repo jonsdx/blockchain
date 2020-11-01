@@ -56,16 +56,6 @@ export const makeAuction = async (wallet, startPrice, clearPrice) => {
           },
         ],
       });
-
-      let stage = await contract.methods.checkStage().call();
-      if (stage === 0)
-          console.log("Auction created successfully!");
-      else if (stage > 0){
-          console.log("Auction already created!");
-      } else {
-          console.log("Auction creation failed");
-      }
-
     } else {
       console.log("Please install MetaMask!");
     }
