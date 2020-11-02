@@ -92,44 +92,43 @@ export const allTokenCount = async () => {
   return allTokens;
 }
 
-// export const setupToken = async () => {
-//     await contract.methods.setup(TokenAddress);
-//     await token.methods.approve(ContractAddress, 10000000);
-//     const provider = await detectEthereumProvider();
-//     if (provider) {
-//         ethereum.request({
-//           method: "eth_sendTransaction",
-//           params: [
-//             {
-//               from: ethereum.selectedAddress,
-//               to: TokenAddress,
-//               value: 0,
-//               data: web3.eth.abi.encodeFunctionCall(
-//                 {
-//                   name: "approve",
-//                   type: "function",
-//                   inputs: [ContractAddress, 10000000],
-//                 },
-//                 []
-//               ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
-//               chainId: 3,
-//             },
-//           ],
-//         })
-//         console.log("sent!");
-//     } else {
-//         console.log("Please install MetaMask!");
-//     }
-//   let stage = await contract.methods.checkStage().call();
-//   if (stage === 1) {
-//       console.log("Token set up successfully!");
-//   }
-//   else if (stage > 1){
-//       console.log("Token already setup!");
-//   } else {
-//       console.log("Token set up failed");
-//   }
-// }
+export const setupToken = async () => {
+    await contract.methods.setup(TokenAddress);
+    // await token.methods.approve(ContractAddress, 10000000);
+    const provider = await detectEthereumProvider();
+    if (provider) {
+        provider.request({
+          method: "eth_sendTransaction",
+          params: [
+            {
+              from: provider.selectedAddress,
+              to: TokenAddress,
+              value: 0,
+              data: web3.eth.abi.encodeFunctionCall(
+                {
+                  name: "approve",
+                  type: "function",
+                  inputs: [
+                    {
+                      type: 'address',
+                      name: 'spender'
+                    },{
+                      type: 'uint256',
+                      name: 'amount'
+                    }
+                  ],
+                },
+                [ContractAddress, 10000000]
+              ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+              chainId: 3,
+            },
+          ],
+        })
+        console.log("sent!");
+    } else {
+        console.log("Please install MetaMask!");
+    }
+}
 
 export const beginAuction = async () => {
     await contract.methods.startAuction();
@@ -143,59 +142,69 @@ export const beginAuction = async () => {
     }
 }
 
-// export const claimMyTokens = async () => {
-//   const provider = await detectEthereumProvider();
-//   if (provider) {
-//       ethereum.request({
-//         method: "eth_sendTransaction",
-//         params: [
-//           {
-//             from: ethereum.selectedAddress,
-//             to: ContractAddress,
-//             value: 0,
-//             data: web3.eth.abi.encodeFunctionCall(
-//               {
-//                 name: "claimTokens",
-//                 type: "function",
-//                 inputs: [ethereum.selectedAddress],
-//               },
-//               []
-//             ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
-//             chainId: 3,
-//           },
-//         ],
-//       });
-//   } else {
-//       console.log("Please install MetaMask!");
-//   }
-// }
+export const claimMyTokens = async () => {
+  const provider = await detectEthereumProvider();
+  if (provider) {
+    provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: provider.selectedAddress,
+            to: ContractAddress,
+            value: 0,
+            data: web3.eth.abi.encodeFunctionCall(
+              {
+                name: "claimTokens",
+                type: "function",
+                inputs: [
+                  {
+                    type: 'address',
+                    name: 'receiver'
+                  }
+                ],
+              },
+              [provider.selectedAddress]
+            ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+            chainId: 3,
+          },
+        ],
+      });
+  } else {
+      console.log("Please install MetaMask!");
+  }
+}
 
-// export const bidAuction = async (bidAmt) => {
-//   const provider = await detectEthereumProvider();
-//   if (provider) {
-//       ethereum.request({
-//         method: "eth_sendTransaction",
-//         params: [
-//           {
-//             from: ethereum.selectedAddress,
-//             to: ContractAddress,
-//             value: bidAmt,
-//             data: web3.eth.abi.encodeFunctionCall(
-//               {
-//                 name: "bid",
-//                 type: "function",
-//                 inputs: [ethereum.selectedAddress],
-//               },
-//               []
-//             ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
-//             chainId: 3,
-//           },
-//         ],
-//       });
-//   } else {
-//       console.log("Please install MetaMask!");
-//   }
-// }
+export const bidAuction = async (bidAmt) => {
+  const provider = await detectEthereumProvider();
+  if (provider) {
+    provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: provider.selectedAddress,
+            to: ContractAddress,
+            value: bidAmt,
+            data: web3.eth.abi.encodeFunctionCall(
+              {
+                name: "bid",
+                type: "function",
+                inputs: [
+                  {
+                    type: 'address',
+                    name: 'receiver'
+                  }
+                ],
+              },
+              [provider.selectedAddress]
+            ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+            chainId: 3,
+          },
+        ],
+      });
+  } else {
+      console.log("Please install MetaMask!");
+  }
+}
 
 
 
