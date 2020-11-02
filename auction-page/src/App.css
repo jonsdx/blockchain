@@ -3,8 +3,13 @@
   color: gray;
 }
 
+.impt {
+  color: plum;
+  font-weight: bold;
+}
+
 .content {
-  padding: 100px;
+  padding: 50px;
   display: flex;
   justify-content: space-between;
 }
@@ -21,7 +26,7 @@
   width: 200px;
   color: white;
   background-color: gray;
-  padding: 50px;
+  padding: 30px;
 }
 
 .select-quantity {
@@ -43,9 +48,9 @@
   border-radius: 25px;
   margin: 10px;
   cursor: pointer;
-  background-color: gray;
+  background-color: plum;
   color: white;
-  padding: 5px
+  padding: 5px;
 }
 
 .rect-button {
@@ -55,7 +60,7 @@
   outline: none;
   border-radius: 25px;
   cursor: pointer;
-  background-color: gray;
+  background-color: plum;
   color: white;
   padding: 5px;
 }

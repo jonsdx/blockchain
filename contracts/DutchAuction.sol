@@ -78,9 +78,6 @@ contract DutchAuction {
     /*
      *  Public functions
      */
-    /// @dev Contract constructor function sets owner.
-    /// @param _wallet Learn wallet.
-    /// @param _startPrice Auction start price.
     function CreateAuction(address payable _wallet, uint256 _startPrice, uint256 _clearPrice)
         public
     {
@@ -94,8 +91,6 @@ contract DutchAuction {
         stage = Stages.AuctionDeployed;
     }
 
-    /// @dev Setup function sets external contracts' addresses.
-    /// @param _LearnToken Learn token address.
     function setup(address _LearnToken)
         public
         isOwner
@@ -126,7 +121,6 @@ contract DutchAuction {
             return(3);
     }
 
-    /// @dev Starts auction and sets startTime.
     function startAuction()
         public
         isWallet
@@ -136,8 +130,6 @@ contract DutchAuction {
         startTime = now;
     }
 
-    /// @dev Changes price factor before auction is started.
-    /// @param _startPrice Updated start price factor.
     function changeSettings(uint256 _startPrice, uint _clearPrice)
         public
         isWallet
@@ -147,8 +139,6 @@ contract DutchAuction {
         clearPrice = _clearPrice;
     }
 
-    /// @dev Calculates current token price.
-    /// @return Returns token price.
     function calcCurrentTokenPrice()
         public
         timedTransitions
@@ -159,8 +149,6 @@ contract DutchAuction {
         return calcTokenPrice();
     }
 
-    /// @dev Returns correct stage, even if a function with timedTransitions modifier has not yet been called yet.
-    /// @return Returns current auction stage.
     function updateStage()
         public
         timedTransitions
@@ -169,8 +157,6 @@ contract DutchAuction {
         return stage;
     }
 
-    /// @dev Allows to send a bid to the auction.
-    /// @param receiver Bid will be assigned to this address if set.
     function bid(address payable receiver)
         public
         payable
@@ -213,8 +199,6 @@ contract DutchAuction {
         BidSubmission(receiver, amount);
     }
 
-    /// @dev Claims tokens for bidder after auction.
-    /// @param receiver Tokens will be assigned to this address if set.
     function claimTokens(address receiver)
         public
         isValidPayload
@@ -229,8 +213,6 @@ contract DutchAuction {
         LearnToken.transferFrom(wallet, receiver, tokenCount);
     }
 
-    /// @dev Calculates token price.
-    /// @return Returns token price.
     function calcTokenPrice()
         public
         view
@@ -239,7 +221,7 @@ contract DutchAuction {
         //need to scale from start price to clear price
         uint256 interval = AUCTION_DURATION / 5;
         uint256 decrement = (startPrice - clearPrice) / 4;
-        if (now < startTime + interval)
+        if (now < startTime + interval || startTime == 0)
             return startPrice;
         else if (now < startTime + (2*interval))
             return startPrice - decrement;
