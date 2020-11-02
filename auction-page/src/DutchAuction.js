@@ -1,5 +1,4 @@
 import detectEthereumProvider from "@metamask/detect-provider";
-import ethereum from "@metamask/detect-provider";
 // NOTE: be aware of this: https://flaviocopes.com/parcel-regeneratorruntime-not-defined/
 import Web3 from "web3";
 
@@ -9,8 +8,8 @@ import artifact_tok from "./Json/NTULearnToken.json";
 
 // const infuraWSS = `wss://ropsten.infura.io/ws/v3/f310feadf7c04024996d4c13a1fd0fbc`; // PLEASE CHANGE IT TO YOURS
 
-export const ContractAddress = "0xf4bD0e5e2337138FF6214E777c812Ab96123c8cC";
-export const TokenAddress = "0x0036714362B94B408ae052da219571dEE2E56C59";
+export const ContractAddress = "0xF1A9ebE1596C9f008F66d26aa03cB435797B7b85";
+export const TokenAddress = "0x1B12820383f14a8217A92CC20885Fe8123b1f588";
 // export const Testnet = "ropsten"; 
 
 // const web3 = new Web3(
@@ -94,7 +93,6 @@ export const allTokenCount = async () => {
 
 export const setupToken = async () => {
     await contract.methods.setup(TokenAddress);
-    // await token.methods.approve(ContractAddress, 10000000);
     const provider = await detectEthereumProvider();
     if (provider) {
         provider.request({
@@ -102,23 +100,20 @@ export const setupToken = async () => {
           params: [
             {
               from: provider.selectedAddress,
-              to: TokenAddress,
+              to: ContractAddress,
               value: 0,
               data: web3.eth.abi.encodeFunctionCall(
                 {
-                  name: "approve",
+                  name: "setup",
                   type: "function",
                   inputs: [
                     {
                       type: 'address',
-                      name: 'spender'
-                    },{
-                      type: 'uint256',
-                      name: 'amount'
+                      name: '_LearnToken'
                     }
                   ],
                 },
-                [ContractAddress, 10000000]
+                [TokenAddress]
               ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
               chainId: 3,
             },
@@ -130,16 +125,67 @@ export const setupToken = async () => {
     }
 }
 
+export const approveToken = async () => {
+  const provider = await detectEthereumProvider();
+  if (provider) {
+      provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: provider.selectedAddress,
+            to: TokenAddress,
+            value: 0,
+            data: web3.eth.abi.encodeFunctionCall(
+              {
+                name: "approve",
+                type: "function",
+                inputs: [
+                  {
+                    type: 'address',
+                    name: 'spender'
+                  },{
+                    type: 'uint256',
+                    name: 'amount'
+                  }
+                ],
+              },
+              [ContractAddress, 10000000]
+            ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+            chainId: 3,
+          },
+        ],
+      })
+      console.log("sent!");
+  } else {
+      console.log("Please install MetaMask!");
+  }
+}
+
 export const beginAuction = async () => {
-    await contract.methods.startAuction();
-    let stage = await contract.methods.checkStage().call();
-    if (stage === 2)
-        console.log("Auction started!");
-    else if (stage > 2){
-        console.log("Auction already ended!");
-    } else {
-        console.log("Auction failed to start");
-    }
+  const provider = await detectEthereumProvider();
+  if (provider) {
+    provider.request({
+        method: "eth_sendTransaction",
+        params: [
+          {
+            from: provider.selectedAddress,
+            to: ContractAddress,
+            value: 0,
+            data: web3.eth.abi.encodeFunctionCall(
+              {
+                name: "startAuction",
+                type: "function",
+                inputs: [],
+              },
+              []
+            ), // https://web3js.readthedocs.io/en/v1.2.11/web3-eth-abi.html#encodefunctioncall
+            chainId: 3,
+          },
+        ],
+      });
+  } else {
+      console.log("Please install MetaMask!");
+  }
 }
 
 export const claimMyTokens = async () => {

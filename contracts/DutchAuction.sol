@@ -239,7 +239,7 @@ contract DutchAuction {
         //need to scale from start price to clear price
         uint256 interval = AUCTION_DURATION / 5;
         uint256 decrement = (startPrice - clearPrice) / 4;
-        if (now < startTime + interval)
+        if (now < startTime + interval || startTime == 0)
             return startPrice;
         else if (now < startTime + (2*interval))
             return startPrice - decrement;
