@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import detectEthereumProvider from "@metamask/detect-provider";
 
 import './App.css';
@@ -9,19 +9,21 @@ let owner = ['']
 
 const App = () => {
 
-  // ---------- set up ----------
+  // ---------- set up data and functions needed ----------
   const [data, setData] = useState({
     selectedQuantity: 0, confirmedQuantity: 0, selectedBidPrice: 0, confirmedBidPrice: 0,
     eth: 0, acc: 0, total: 0, remain: 0, userTokens: 0, price: 0, timeLeft: 0, stage: 0,
-    startPrice: 0, endPrice: 0,
+    startPrice: 0, endPrice: 0, sum: 0
   })
   const { selectedQuantity, confirmedQuantity, selectedBidPrice, confirmedBidPrice,
-    eth, acc, total, remain, userTokens, price, timeLeft, stage, startPrice, endPrice } = data
+    eth, acc, total, remain, userTokens, price, timeLeft, stage, startPrice, endPrice, sum } = data
 
   const { web3, allTokenCount, supply, checkPrice, checkTime, checkStage, tokenCount, makeAuction,
-    beginAuction, bidAuction, claimMyTokens, setupToken, endAuction, approveToken } = da
+    beginAuction, bidAuction, claimMyTokens, setupToken, approveToken } = da //functions from DutchAuction.js
 
   // ---------- refresh function ----------
+
+  // Fetch data from the blockchain and display the updates to the user
   const refresh = async () => {
     const p = await detectEthereumProvider();
     owner = await web3.eth.getAccounts()
@@ -30,23 +32,29 @@ const App = () => {
     console.log(acc1)
     const [eth1, userTokens1] = [await web3.eth.getBalance(acc1), await tokenCount(acc1)];
     const [total1, price1, timeLeft1, stage1] = [await allTokenCount(), await checkPrice(), await checkTime(), await checkStage()];
+    console.log(timeLeft1);
+    let remain1 = 0
+    if (stage1 >= 1 && stage1 < 3) {
+      remain1 = await supply()
+    };
     setData((state) => {
       return {
         ...state,
         acc: acc1,
         eth: eth1,
         total: total1,
-        // remain: remain1,
+        remain: remain1,
         userTokens: userTokens1,
         price: price1,
         timeLeft: timeLeft1,
         stage: stage1
       }
     })
-
   }
 
   // ---------- start auction functions ----------
+
+  // create an auction
   const startAuction = async () => {
     console.log(acc)
     console.log(startPrice)
@@ -54,19 +62,24 @@ const App = () => {
     await makeAuction(acc, startPrice, endPrice)
   }
 
+  // setup the token
   const setupToken1 = async () => {
     await setupToken()
   }
 
+  // approve the token
   const approveToken1 = async () => {
     await approveToken()
   }
 
+  // begin the auction
   const beginAuction1 = async () => {
     await beginAuction()
   }
 
   // ---------- input auction functions ----------
+
+  // update the start price as the user types
   const inputStartPrice = (v) => {
     setData((state) => {
       return {
@@ -76,6 +89,7 @@ const App = () => {
     })
   }
 
+  // update the end price as the user types
   const inputEndPrice = (v) => {
     setData((state) => {
       return {
@@ -85,12 +99,14 @@ const App = () => {
     })
   }
 
+  // submit the user's bid to the blockchain
   const bid = async () => {
     setData((state) => {
       return {
         ...state,
         confirmedQuantity: selectedQuantity,
-        confirmedBidPrice: selectedBidPrice
+        confirmedBidPrice: selectedBidPrice,
+        sum: sum + selectedBidPrice * selectedQuantity
       }
     });
     const value = selectedBidPrice * selectedQuantity
@@ -100,18 +116,20 @@ const App = () => {
   }
 
   // ---------- end of auction ----------
-  const end = async () => {
-    await endAuction()
-  }
 
+  // allow users to claim their tokens at the end of the auction
   const claim = async () => {
     await claimMyTokens()
   }
 
+  // UI
   return (
     <div>
+
+      {/* Top Bar */}
       <h1 className="title">NTULearnToken Dutch Auction</h1>
       <div className="content-top">
+        {/* Checks if the user is the deployer. If true, allow him to start an auction */}
         {acc === owner[0].toLowerCase() &&
           <span>
             <div>
@@ -131,44 +149,38 @@ const App = () => {
                   <button className="rect-button" type="button" onClick={setupToken1}> Set Up Tokens</button>
                   <button className="rect-button" type="button" onClick={approveToken1}> Approve </button>
                   <button className="rect-button" type="button" onClick={beginAuction1}> Start Auction</button>
-                  <button
-                    type="button"
-                    className="rect-button"
-                    onClick={end}
-                  >End</button>
                 </div>
               </form>
             </div>
           </span>}
-        <button
-          type="button"
-          className="rect-button"
-          onClick={refresh}
-        >Refresh</button>
+        {/* Refresh button to display update information */}
+        <button type="button" className="rect-button" onClick={refresh}>Refresh</button>
       </div>
       <div className="content">
+
         {/* Column 1 */}
         <div>
+          {/* The amount of NTULearnTokens the user owns */}
           <div className="card--gray">
             <p><u>Your NTULearnTokens</u></p>
             <p>Token Quantity: </p>
             <span className="impt">{userTokens}</span>
           </div>
           <br />
+          {/* The amount of NTULearnTokens the user owns */}
           <div className="card--gray">
             <p><u>Your Ethereum</u></p>
             <p>value ({currency}): </p>
             <span className="impt">{eth}</span>
           </div>
           <br />
-          <button
-            type="button"
-            className="rect-button"
-            onClick={claim}
-          >Claim Tokens</button>
+          {/* Button to let users claim the tokens they receive */}
+          <button type="button" className="rect-button" onClick={claim}>Claim Tokens</button>
         </div>
+
         {/* Column 2 */}
         <div style={{ border: '2px solid gray', width: '700px', paddingLeft: '30px', paddingRight: '30px' }}>
+          {/* User to select the quantity of NTULearnTokens to bid */}
           <p><strong className="title">Select Quantity</strong></p>
           <div className="select-quantity">
             <button
@@ -206,6 +218,7 @@ const App = () => {
               Plus
             </button>
           </div>
+          {/* User to select the price  of NTULearnTokens to bid */}
           <p><strong className="title">Select Bid Price ({currency})</strong></p>
           <div className="select-quantity">
             <button
@@ -244,7 +257,10 @@ const App = () => {
             </button>
           </div>
           <br />
+          {/* Display the current user address and total sum bidded */}
           <p className="title">address: <span className="impt">{acc}</span></p>
+          <p className="title">total sum bidded: <span className="impt">{sum}</span></p>
+          {/* User to submit bid */}
           <div style={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
             {confirmedQuantity === 0 || confirmedBidPrice === 0 ?
               <button
@@ -273,14 +289,20 @@ const App = () => {
               </div>}
           </div>
         </div>
+
         {/* Column 3 */}
         <div>
+          {/* Display remaining NTULearnTokens */}
           <div className="card--gray"><p><u>NTULearnTokens Supply</u></p><span className="impt">{remain}</span></div>
           <br />
-          <div className="card--gray"><p><u>Current NLT Price</u></p><p><span className="impt">{price}</span> ({currency})</p></div>
+          {/* Display current NTULearnTokens price*/}
+          <div className="card--gray"><p><u>Current NLT Price ({currency})</u></p><p><span className="impt">{price}</span></p></div>
+          {/* Display total tokens in the market*/}
           <p><strong className="title">Total Tokens: <span className="impt">{total}</span></strong></p>
+          {/* Display auction stage*/}
           <p><strong className="title">Auction Stage: <span className="impt">{stage}</span>/3</strong></p>
-          <p><strong className="title">Time Left: {{ timeLeft } > 1201 && <span className="impt">{timeLeft}</span>}</strong></p>
+          {/* Display time left for the current auction*/}
+          <p><strong className="title">Time Left (seconds): {timeLeft < 1201 && <span className="impt">{timeLeft}</span>}</strong></p>
         </div>
         {/* End */}
       </div>

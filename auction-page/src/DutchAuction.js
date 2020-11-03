@@ -8,8 +8,8 @@ import artifact_tok from "./Json/NTULearnToken.json";
 
 // const infuraWSS = `wss://ropsten.infura.io/ws/v3/f310feadf7c04024996d4c13a1fd0fbc`; // PLEASE CHANGE IT TO YOURS
 
-export const ContractAddress = "0x69D9659cF5e061a0A2A4235C88e1ce2B29F58DD2";
-export const TokenAddress = "0x3002dd4e22E438005076568eDb89BAF7517fb8CD";
+export const ContractAddress = "0xC66B049289B6e66d8fA85F528F7092BCce9C4a4C";
+export const TokenAddress = "0xB9F8CEeff4254cDB1dD8A7D4Dd7Cb107AE50486A";
 // export const Testnet = "ropsten"; 
 
 // const web3 = new Web3(

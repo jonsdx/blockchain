@@ -78,6 +78,7 @@ contract DutchAuction {
     /*
      *  Public functions
      */
+    // Create an auction with the address where tokens are stored, starting and ending price
     function CreateAuction(address payable _wallet, uint256 _startPrice, uint256 _clearPrice)
         public
     {
@@ -91,6 +92,7 @@ contract DutchAuction {
         stage = Stages.AuctionDeployed;
     }
 
+    // Set up auction with address of token contract
     function setup(address _LearnToken)
         public
         isOwner
@@ -106,6 +108,7 @@ contract DutchAuction {
         stage = Stages.AuctionSetUp;
     }
 
+    // Returns the current stage
     function checkStage()
         public
         view
@@ -121,6 +124,7 @@ contract DutchAuction {
             return(3);
     }
 
+    // Starts the auction
     function startAuction()
         public
         isWallet
@@ -130,15 +134,7 @@ contract DutchAuction {
         startTime = now;
     }
 
-    function changeSettings(uint256 _startPrice, uint _clearPrice)
-        public
-        isWallet
-        atStage(Stages.AuctionSetUp)
-    {
-        startPrice = _startPrice;
-        clearPrice = _clearPrice;
-    }
-
+    // Returns current token price for buyers
     function calcCurrentTokenPrice()
         public
         timedTransitions
@@ -157,6 +153,7 @@ contract DutchAuction {
         return stage;
     }
 
+    // Provides bidding functionality to buyers
     function bid(address payable receiver)
         public
         payable
@@ -199,6 +196,7 @@ contract DutchAuction {
         BidSubmission(receiver, amount);
     }
 
+    // Lets buyers claim tokens after auction is over
     function claimTokens(address receiver)
         public
         isValidPayload
@@ -213,6 +211,7 @@ contract DutchAuction {
         LearnToken.transferFrom(wallet, receiver, tokenCount);
     }
 
+    // Calculates token price for internal use
     function calcTokenPrice()
         public
         view
@@ -234,6 +233,7 @@ contract DutchAuction {
         }
     }
 
+    // Auction ending function for testing; restricted to owners use only
     function endAuction() 
         public 
         isOwner
@@ -241,6 +241,7 @@ contract DutchAuction {
         finalizeAuction();
     }
 
+    // Auction time skip function for testing; restricted to owners use only
     function skipTime()
         public
         isOwner
@@ -248,25 +249,29 @@ contract DutchAuction {
         AUCTION_DURATION = 0 minutes;
     }
 
+    // Returns time left before auction ends
     function timeLeft()
         public
         view
         returns (uint256)
     {
         uint256 remainingTime = startTime + AUCTION_DURATION - now;
-        if (remainingTime < 0){
+        if (remainingTime < 0 || remainingTime > 20){
             return 0;
         } else {
             return remainingTime;
         }
     }
 
+    // Returns the remaining supply of tokens in the auction
     function tokensLeft()
         public
         view
         returns (uint256)
     {
         uint256 currPrice = calcTokenPrice(); 
+        if (currPrice == 0)
+            currPrice = 1;
         uint256 soldTokens = totalReceived / currPrice;
         uint256 tokensRemaining = MAX_TOKENS_SOLD - soldTokens;
         return tokensRemaining; 
